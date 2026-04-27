@@ -1,4 +1,10 @@
 {
+  "session_chat_maxlen": {
+    "type": "int",
+    "description": "群聊消息缓存上限",
+    "hint": "每个群聊最多缓存的未处理消息条数，超出自动丢弃最旧记录。-1 表示不限制",
+    "default": 500
+  },
   "max_context_rounds": {
     "type": "int",
     "description": "最多携带的 user/assistant 对话轮数",

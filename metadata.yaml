@@ -1,6 +1,6 @@
-name: astrbot_plugin_group_context # 插件唯一识别名,以 astrbot_plugin_ 前缀开头
-display_name: 群聊上下文感知增强 # 用于展示的名字,可以是方便人类阅读的名字
-desc: 增强的群聊上下文管理，提供群聊记录追踪、图片描述、合并转发分析、指令过滤等功能 # 插件简短描述
-version: v0.1.0 # 插件版本号
-author: Fold # 作者
-repo: https://github.com/FFFold/astrbot_plugin_group_context_advanced # 插件的仓库地址
+name: astrbot_plugin_group_context_advanced
+display_name: 群聊上下文感知增强
+desc: 更优雅的群聊上下文管理，全面替代内置的“群聊上下文感知”功能，支持更灵活的上下文控制、图片识别、合并转发分析。
+version: v0.1.0
+author: Fold
+repo: https://github.com/FFFold/astrbot_plugin_group_context_advanced

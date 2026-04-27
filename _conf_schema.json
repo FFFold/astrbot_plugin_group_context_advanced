@@ -2,13 +2,13 @@
   "max_context_rounds": {
     "type": "int",
     "description": "最多携带的 user/assistant 对话轮数",
-    "hint": "超出时丢弃最旧的部分，-1 表示不限制",
+    "hint": "超出时丢弃最旧的部分。与 AstrBot 框架的「最多携带对话轮数」共同作用，更严格的生效。设为 -1 表示不限制，即完全复用框架自身的上下文管理策略",
     "default": -1
   },
   "dequeue_context_rounds": {
     "type": "int",
     "description": "一次丢弃的对话轮数",
-    "hint": "超出 max_context_rounds 时，一次性丢弃的最旧轮数。值越大缓存命中率越高",
+    "hint": "仅在 max_context_rounds 不为 -1 时生效。值越大，两次截断之间保留的缓存越多",
     "default": 2
   },
   "system_prompt": {

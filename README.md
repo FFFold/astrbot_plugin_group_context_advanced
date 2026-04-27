@@ -1,4 +1,6 @@
-# 群聊上下文感知插件
+# 群聊上下文感知增强插件
+
+> 修改优化自https://github.com/zz6zz666/astrbot_plugin_group_context
 
 基于 AstrBot 内置的群聊上下文进行优化和增强，提供以下核心功能：
  - 📝 **群聊记录追踪**: 自动记录群聊消息，为 AI 提供上下文信息
@@ -38,15 +40,13 @@
 
 ## 与内置插件的区别
 
-本插件基于 AstrBot 内置的 long_term_memory 功能，主要改进包括：
+本插件主要改进包括：
 
-1. **user/agent 对**形式的上下文，每次请求的 prompt 中仅包含上一轮请求过后新增的群聊消息，带来更好的群聊体验
+1. astrbot框架原有的群聊上下文感知功能会将内容插入到系统提示词`system_prompt`的结尾，会造成上下文无法命中缓存，造成额外的资费消耗。本插件复用原生的**user/agent 对**形式的上下文，每次请求的 prompt 中仅包含上一轮请求过后新增的群聊消息，带来更好的群聊体验。
 
 <img width="1229" height="820" alt="image-3" src="https://github.com/user-attachments/assets/1e6e41f1-1585-44d2-b904-119503f4fa09" />
 
 2. **自定义的 system 提示词**，支持自定义提示词内容，并在请求末尾以 system 字段注入。使用 `[GCPLUGIN]` 标记精确标识，确保上一轮的提示词能被正确清洗。
-
-<img width="1249" height="848" alt="被动回复" src="https://github.com/user-attachments/assets/cb6eb477-0e79-4e14-8fbc-7ed96cac481f" />
 
 3. **合并转发消息分析**，支持直接发送或回复引用合并转发消息，自动分析合并转发内容并记录到上下文。
 
@@ -114,7 +114,7 @@
 
 ## 注意事项
 
-- 请确保禁用 AstrBot 内置的 long_term_memory 功能，避免冲突
+- 请确保禁用 AstrBot 内置的群聊上下文感知功能，避免冲突
 - 图片描述功能需要配置支持多模态的 Provider
 - `max_context_rounds` 设为 `-1`（默认）时不做限制，完全依赖框架自身的截断策略
 

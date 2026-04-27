@@ -1,6 +1,6 @@
 name: astrbot_plugin_group_context # 插件唯一识别名,以 astrbot_plugin_ 前缀开头
-display_name: 群聊上下文感知 # 用于展示的名字,可以是方便人类阅读的名字
-desc: 优化群聊上下文增强功能，提供user/agent对形式的上下文、合并转发消息分析、自定义提示词、图片描述与原生图片URL支持等功能（请关闭内置的聊天上下文增强功能） # 插件简短描述
-version: v1.4.0 # 插件版本号
-author: zz6zz666 # 作者
-repo: https://github.com/zz6zz666/astrbot_plugin_group_context # 插件的仓库地址
+display_name: 群聊上下文感知增强 # 用于展示的名字,可以是方便人类阅读的名字
+desc: 基于 AstrBot 内置的群聊上下文进行优化和增强功能，用以全面替代“群聊上下文感知”功能 # 插件简短描述
+version: v0.0.1 # 插件版本号
+author: Fold # 作者
+repo: https://github.com/FFFold/astrbot_plugin_group_context_advanced # 插件的仓库地址

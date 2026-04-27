@@ -31,6 +31,7 @@ except ImportError:
 
 SYSTEM_MARKER = "[GCPLUGIN]"
 GC_CHAT_MARKER = "<!--group_context_plugin_chat-->"
+CONSUMED_CHAT_COUNT_EXTRA = "group_context_consumed_chat_count"
 
 @register("group_context", "zz6zz666", "增强的群聊上下文管理，提供群聊记录追踪、图片描述、合并转发分析、指令过滤等功能", "0.1.0")
 class GroupContextPlugin(Star):
@@ -467,7 +468,11 @@ class GroupContextPlugin(Star):
         combined_content = []
         text_prompt_parts = []
 
-        for message in self.session_chats[event.unified_msg_origin]:
+        session_chat = self.session_chats[event.unified_msg_origin]
+        consumed_count = len(session_chat)
+        event.set_extra(CONSUMED_CHAT_COUNT_EXTRA, consumed_count)
+
+        for message in list(session_chat):
             combined_content.extend(message)
 
             text_part = ""
@@ -526,7 +531,9 @@ class GroupContextPlugin(Star):
 
         umo = event.unified_msg_origin
         if umo in self.session_chats:
-            self.session_chats[umo].clear()
+            consumed_count = event.get_extra(CONSUMED_CHAT_COUNT_EXTRA, 0)
+            for _ in range(min(consumed_count, len(self.session_chats[umo]))):
+                self.session_chats[umo].popleft()
             if not self.session_chats[umo]:
                 del self.session_chats[umo]
 

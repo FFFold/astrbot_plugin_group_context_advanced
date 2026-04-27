@@ -53,6 +53,12 @@
     "hint": "仅 aiocqhttp 平台，支持直接发送或回复引用的合并转发消息",
     "default": true
   },
+  "forward_max_messages": {
+    "type": "int",
+    "description": "合并转发最大解析条数",
+    "hint": "单次合并转发最多解析的消息节点数，超出部分将被截断。用于防止 token 超限和恶意注入",
+    "default": 50
+  },
   "enable_command_filter": {
     "type": "bool",
     "description": "是否启用指令消息过滤",

@@ -1,7 +1,7 @@
 import datetime
 import traceback
 import uuid
-from collections import defaultdict
+from collections import defaultdict, deque
 
 import astrbot.api.message_components as Comp
 from astrbot.api import AstrBotConfig, logger
@@ -28,13 +28,14 @@ except ImportError:
 
 SYSTEM_MARKER = "[GCPLUGIN]"
 GC_CHAT_MARKER = "<!--group_context_plugin_chat-->"
+SESSION_CHAT_MAXLEN = 500
 
 @register("group_context", "zz6zz666", "增强的群聊上下文管理，提供群聊记录追踪、图片描述、合并转发分析、指令过滤等功能", "0.1.0")
 class GroupContextPlugin(Star):
     def __init__(self, context: Context, config: AstrBotConfig):
         super().__init__(context)
         self.config = config
-        self.session_chats = defaultdict(list)
+        self.session_chats = defaultdict(lambda: deque(maxlen=SESSION_CHAT_MAXLEN))
         """记录群成员的群聊消息，每个元素是包含多模态内容的列表"""
 
         self.max_context_rounds = int(self.get_cfg("max_context_rounds", -1))
@@ -43,6 +44,7 @@ class GroupContextPlugin(Star):
             "You are now in a chatroom. The chat history is as above. Now, new messages are coming.")
 
         self.enable_forward_analysis = bool(self.get_cfg("enable_forward_analysis", True))
+        self.forward_max_messages = int(self.get_cfg("forward_max_messages", 50))
         self.forward_prefix = "【合并转发内容】"
 
         self.enable_image_recognition = bool(self.get_cfg("enable_image_recognition", True))
@@ -73,7 +75,7 @@ class GroupContextPlugin(Star):
                 return True
         return False
 
-    def _extract_image_url(self, image_data) -> str | None:
+    def _extract_image_url(self, image_data: str | dict | Image) -> str | None:
         if not image_data:
             return None
 
@@ -202,7 +204,7 @@ class GroupContextPlugin(Star):
 
         try:
             await self.handle_message(event)
-        except BaseException as e:
+        except Exception as e:
             logger.error(f"记录群聊消息失败: {e}")
 
     async def handle_message(self, event: AstrMessageEvent):
@@ -218,7 +220,7 @@ class GroupContextPlugin(Star):
 
         current_message_content = []
 
-        full_text = f"[{event.message_obj.sender.nickname}/{datetime_str}]: "
+        full_text = f"[{getattr(event.message_obj.sender, 'nickname', 'Unknown')}/{datetime_str}]: "
 
         if self.enable_forward_analysis and IS_AIOCQHTTP:
 
@@ -233,7 +235,11 @@ class GroupContextPlugin(Star):
 
                         full_text += f"\n{self.forward_prefix}\n\t<begin>\n"
 
-                        for message_node in messages:
+                        for i, message_node in enumerate(messages):
+                            if i >= self.forward_max_messages:
+                                full_text += f"\n\t[转发消息过多，已截断，共 {self.forward_max_messages}/{len(messages)} 条]\n"
+                                break
+
                             sender_name = message_node.get("sender", {}).get("nickname", "未知用户")
                             raw_content = message_node.get("message") or message_node.get("content", [])
 
@@ -251,25 +257,7 @@ class GroupContextPlugin(Star):
                                     elif seg_type == "image":
                                         img_url = self._extract_image_url(seg_data)
                                         if img_url:
-                                            if self.enable_image_recognition:
-                                                if self.image_caption:
-                                                    try:
-                                                        caption = await self.get_image_caption(img_url, self.image_caption_provider_id)
-                                                        full_text += f" [图片描述: {caption}]"
-                                                    except Exception as e:
-                                                        logger.error(f"获取图片描述失败: {e}")
-                                                        full_text += " [图片]"
-                                                else:
-                                                    if full_text:
-                                                        current_message_content.append({"type": "text", "text": full_text})
-                                                        full_text = ""
-                                                    image_data = await self._encode_image_bs64(img_url)
-                                                    if image_data:
-                                                        current_message_content.append({"type": "image_url", "image_url": {"url": image_data}})
-                                                    else:
-                                                        full_text += " [图片]"
-                                            else:
-                                                full_text += " [图片]"
+                                            full_text, current_message_content = await self._resolve_image(img_url, full_text, current_message_content)
 
                             full_text += "\n"
 
@@ -291,25 +279,7 @@ class GroupContextPlugin(Star):
             elif isinstance(comp, Image):
                 url = self._extract_image_url(comp)
                 if url:
-                    if self.enable_image_recognition:
-                        if self.image_caption:
-                            try:
-                                caption = await self.get_image_caption(url, self.image_caption_provider_id)
-                                full_text += f" [图片描述: {caption}]"
-                            except Exception as e:
-                                logger.error(f"获取图片描述失败: {e}")
-                                full_text += " [图片]"
-                        else:
-                            if full_text:
-                                current_message_content.append({"type": "text", "text": full_text})
-                                full_text = ""
-                            image_data = await self._encode_image_bs64(url)
-                            if image_data:
-                                current_message_content.append({"type": "image_url", "image_url": {"url": image_data}})
-                            else:
-                                full_text += " [图片]"
-                    else:
-                        full_text += " [图片]"
+                    full_text, current_message_content = await self._resolve_image(url, full_text, current_message_content)
             elif isinstance(comp, Forward):
                 pass
 
@@ -364,6 +334,30 @@ class GroupContextPlugin(Star):
             persist=False,
         )
         return response.completion_text
+
+    async def _resolve_image(self, img_url: str, full_text: str, current_message_content: list) -> tuple[str, list]:
+        """根据配置处理图片，返回 (更新后的 full_text, 更新后的 current_message_content)"""
+        if not self.enable_image_recognition:
+            return full_text + " [图片]", current_message_content
+
+        if self.image_caption:
+            try:
+                caption = await self.get_image_caption(img_url, self.image_caption_provider_id)
+                full_text += f" [图片描述: {caption}]"
+            except Exception as e:
+                logger.error(f"获取图片描述失败: {e}")
+                full_text += " [图片]"
+            return full_text, current_message_content
+
+        if full_text:
+            current_message_content.append({"type": "text", "text": full_text})
+            full_text = ""
+        image_data = await self._encode_image_bs64(img_url)
+        if image_data:
+            current_message_content.append({"type": "image_url", "image_url": {"url": image_data}})
+        else:
+            full_text = " [图片]"
+        return full_text, current_message_content
 
     def _find_round_ends(self, contexts: list) -> list[int]:
         """找出上下文列表中每个对话轮次的结束位置（assistant 消息的索引）"""

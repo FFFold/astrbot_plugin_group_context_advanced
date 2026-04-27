@@ -1,7 +1,10 @@
 import datetime
+import os
 import traceback
 import uuid
 from collections import defaultdict, deque
+from urllib.parse import urlparse
+from urllib.request import url2pathname
 
 import astrbot.api.message_components as Comp
 from astrbot.api import AstrBotConfig, logger
@@ -299,11 +302,18 @@ class GroupContextPlugin(Star):
                 return image_url.replace("base64://", "data:image/jpeg;base64,")
             elif image_url.startswith("http"):
                 image_path = await download_image_by_url(image_url)
-                with open(image_path, "rb") as f:
-                    image_bs64 = base64.b64encode(f.read()).decode("utf-8")
-                return "data:image/jpeg;base64," + image_bs64
-            elif image_url.startswith("file:///"):
-                image_path = image_url.replace("file:///", "")
+                try:
+                    with open(image_path, "rb") as f:
+                        image_bs64 = base64.b64encode(f.read()).decode("utf-8")
+                    return "data:image/jpeg;base64," + image_bs64
+                finally:
+                    try:
+                        os.remove(image_path)
+                    except OSError:
+                        pass
+            elif image_url.startswith("file://"):
+                parsed = urlparse(image_url)
+                image_path = url2pathname(parsed.path)
                 with open(image_path, "rb") as f:
                     image_bs64 = base64.b64encode(f.read()).decode("utf-8")
                 return "data:image/jpeg;base64," + image_bs64
@@ -488,8 +498,6 @@ class GroupContextPlugin(Star):
 
         req.contexts.append(user_message)
 
-        self.session_chats[event.unified_msg_origin].clear()
-
     @filter.on_llm_request(priority=-10000)
     async def on_req_llm_clear_prompt(self, event: AstrMessageEvent, req: ProviderRequest):
         """在所有插件处理完后，剔除群聊记录文本，保留其他插件对 prompt 的修改"""
@@ -515,6 +523,12 @@ class GroupContextPlugin(Star):
         req = event.get_extra("provider_request")
         if req is not None:
             req.prompt = ""
+
+        umo = event.unified_msg_origin
+        if umo in self.session_chats:
+            self.session_chats[umo].clear()
+            if not self.session_chats[umo]:
+                del self.session_chats[umo]
 
     async def terminate(self):
         logger.info("群聊上下文感知插件已卸载")

@@ -4,8 +4,6 @@ import os
 import traceback
 import uuid
 from collections import defaultdict, deque
-from urllib.parse import urlparse
-from urllib.request import url2pathname
 
 import astrbot.api.message_components as Comp
 from astrbot.api import AstrBotConfig, logger
@@ -266,16 +264,9 @@ class GroupContextPlugin(Star):
                         os.remove(image_path)
                     except OSError:
                         pass
-            elif image_url.startswith("file://"):
-                parsed = urlparse(image_url)
-                image_path = url2pathname(parsed.path)
-                with open(image_path, "rb") as f:
-                    image_bs64 = base64.b64encode(f.read()).decode("utf-8")
-                return "data:image/jpeg;base64," + image_bs64
             else:
-                with open(image_url, "rb") as f:
-                    image_bs64 = base64.b64encode(f.read()).decode("utf-8")
-                return "data:image/jpeg;base64," + image_bs64
+                logger.warning(f"不支持的图片 URL 协议: {image_url[:50]}")
+                return ""
         except Exception as e:
             logger.error(f"将图片转换为base64失败: {image_url}, 错误: {e}")
             return ""

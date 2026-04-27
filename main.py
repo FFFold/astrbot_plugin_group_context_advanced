@@ -27,6 +27,7 @@ except ImportError:
 """
 
 SYSTEM_MARKER = "[GCPLUGIN]"
+GC_CHAT_MARKER = "<!--group_context_plugin_chat-->"
 
 @register("group_context", "zz6zz666", "增强的群聊上下文管理，提供群聊记录追踪、图片描述、合并转发分析、指令过滤等功能", "0.1.0")
 class GroupContextPlugin(Star):
@@ -474,9 +475,14 @@ class GroupContextPlugin(Star):
             if text_part.strip():
                 text_prompt_parts.append(text_part.strip())
 
-        req.prompt = ""
+        chat_text = ""
         if text_prompt_parts:
-            req.prompt = "\n---\n".join(text_prompt_parts)
+            chat_text = "\n---\n".join(text_prompt_parts)
+
+        if req.prompt:
+            req.prompt = req.prompt + "\n" + GC_CHAT_MARKER + "\n" + chat_text
+        elif chat_text:
+            req.prompt = chat_text
 
         logger.debug(f"构建的prompt: \n{req.prompt}")
 
@@ -491,11 +497,12 @@ class GroupContextPlugin(Star):
 
     @filter.on_llm_request(priority=-10000)
     async def on_req_llm_clear_prompt(self, event: AstrMessageEvent, req: ProviderRequest):
-        """在所有插件处理完后，将 prompt 清空，并清除上下文中空的 user 字段"""
+        """在所有插件处理完后，剔除群聊记录文本，保留其他插件对 prompt 的修改"""
         if event.get_message_type() != MessageType.GROUP_MESSAGE:
             return
 
-        req.prompt = ""
+        if req.prompt and GC_CHAT_MARKER in req.prompt:
+            req.prompt = req.prompt.split(GC_CHAT_MARKER)[0].rstrip("\n")
 
         if req.contexts:
             req.contexts = [

@@ -1,3 +1,4 @@
+import base64
 import datetime
 import os
 import traceback
@@ -135,51 +136,6 @@ class GroupContextPlugin(Star):
 
         return None
 
-    async def _extract_forward_content(self, event, forward_id: str) -> tuple[str, list[str]]:
-        if not IS_AIOCQHTTP or not isinstance(event, AiocqhttpMessageEvent):
-            return "", []
-
-        try:
-            client = event.bot
-            forward_data = await client.api.call_action("get_forward_msg", id=forward_id)
-            messages = forward_data.get("messages", [])
-
-            extracted_texts = []
-            image_urls = []
-
-            for message_node in messages:
-                sender_name = message_node.get("sender", {}).get("nickname", "未知用户")
-                raw_content = message_node.get("message") or message_node.get("content", [])
-
-                node_text_parts = []
-                for seg in raw_content:
-                    if isinstance(seg, dict):
-                        seg_type = seg.get("type")
-                        seg_data = seg.get("data", {})
-
-                        if seg_type == "text":
-                            node_text_parts.append(seg_data.get("text", ""))
-                        elif seg_type == "image":
-                            if self.enable_image_recognition:
-                                img_url = self._extract_image_url(seg_data)
-                                if img_url:
-                                    image_urls.append(img_url)
-                                    node_text_parts.append("[图片]")
-                        elif seg_type == "at":
-                            node_text_parts.append(f"[At: {seg_data.get('qq', '')}]")
-
-                full_node_text = "".join(node_text_parts).strip()
-                if full_node_text:
-                    extracted_texts.append(f"{sender_name}: {full_node_text}")
-
-            final_text = "\n".join(extracted_texts)
-            return final_text, image_urls
-
-        except Exception as e:
-            logger.error(f"提取合并转发内容失败: {e}")
-            logger.error(traceback.format_exc())
-            return "", []
-
     @filter.platform_adapter_type(filter.PlatformAdapterType.ALL)
     async def on_message(self, event: AstrMessageEvent):
         """处理群聊消息，记录到上下文缓存"""
@@ -197,7 +153,7 @@ class GroupContextPlugin(Star):
 
         has_valid_content = False
         for comp in event.message_obj.message:
-            if isinstance(comp, Plain) or isinstance(comp, Image):
+            if isinstance(comp, (Plain, Image)):
                 has_valid_content = True
                 break
             if IS_AIOCQHTTP and isinstance(comp, Forward):
@@ -297,8 +253,6 @@ class GroupContextPlugin(Star):
 
     async def _encode_image_bs64(self, image_url: str) -> str:
         try:
-            import base64
-
             if image_url.startswith("base64://"):
                 return image_url.replace("base64://", "data:image/jpeg;base64,")
             elif image_url.startswith("http"):
@@ -489,7 +443,7 @@ class GroupContextPlugin(Star):
         if text_prompt_parts:
             chat_text = "\n---\n".join(text_prompt_parts)
 
-        if req.prompt:
+        if req.prompt and chat_text:
             req.prompt = req.prompt + "\n" + GC_CHAT_MARKER + "\n" + chat_text
         elif chat_text:
             req.prompt = chat_text

@@ -32,7 +32,7 @@ SYSTEM_MARKER = "[GCPLUGIN]"
 GC_CHAT_MARKER = "<!--group_context_plugin_chat-->"
 CONSUMED_CHAT_COUNT_EXTRA = "group_context_consumed_chat_count"
 
-@register("group_context", "zz6zz666", "增强的群聊上下文管理，提供群聊记录追踪、图片描述、合并转发分析、指令过滤等功能", "0.1.0")
+@register("group_context_advanced", "Fold", "更优雅的群聊上下文管理，全面替代内置的“群聊上下文感知”功能，支持更灵活的上下文控制、图片识别、合并转发分析。", "0.1.0")
 class GroupContextPlugin(Star):
     def __init__(self, context: Context, config: AstrBotConfig):
         super().__init__(context)

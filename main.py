@@ -163,6 +163,7 @@ class GroupContextPlugin(Star):
         return None
 
     @filter.platform_adapter_type(filter.PlatformAdapterType.ALL)
+    @filter.event_message_type(filter.EventMessageType.GROUP_MESSAGE, priority=10000)
     async def on_message(self, event: AstrMessageEvent):
         """处理群聊消息，记录到上下文缓存"""
         if event.get_message_type() != MessageType.GROUP_MESSAGE:

@@ -5,6 +5,18 @@
     "hint": "每个群聊最多缓存的未处理消息条数，超出自动丢弃最旧记录。-1 表示不限制",
     "default": 500
   },
+  "group_whitelist": {
+    "type": "list",
+    "description": "启用插件的群聊白名单",
+    "hint": "填写群号或 unified_msg_origin。留空表示不限制",
+    "default": []
+  },
+  "group_blacklist": {
+    "type": "list",
+    "description": "禁用插件的群聊黑名单",
+    "hint": "填写群号或 unified_msg_origin。黑名单优先级高于白名单",
+    "default": []
+  },
   "max_context_rounds": {
     "type": "int",
     "description": "最多携带的 user/assistant 对话轮数",

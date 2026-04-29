@@ -26,6 +26,9 @@
 
 | 配置项 | 类型 | 默认值 | 说明 |
 |--------|------|--------|------|
+| `session_chat_maxlen` | int | `500` | 每个群聊最多缓存的未处理消息条数，`-1` 表示不限制 |
+| `group_whitelist` | list | `[]` | 启用插件的群聊白名单，填写群号或 `unified_msg_origin`，留空表示不限制 |
+| `group_blacklist` | list | `[]` | 禁用插件的群聊黑名单，填写群号或 `unified_msg_origin`，黑名单优先级高于白名单 |
 | `max_context_rounds` | int | `-1` | 最多携带的 user/assistant 对话轮数，`-1` 表示不限制 |
 | `dequeue_context_rounds` | int | `2` | 超出上限时一次丢弃的对话轮数 |
 | `system_prompt` | string | — | 注入当前请求的 system 提示词 |

@@ -32,7 +32,7 @@ SYSTEM_MARKER = "[GCPLUGIN]"
 GC_CHAT_MARKER = "<!--group_context_plugin_chat-->"
 CONSUMED_CHAT_COUNT_EXTRA = "group_context_consumed_chat_count"
 
-@register("group_context_advanced", "Fold", "更优雅的群聊上下文管理，全面替代内置的“群聊上下文感知”功能，支持更灵活的上下文控制、图片识别、合并转发分析。", "0.1.0")
+@register("group_context_advanced", "Fold", "更优雅的群聊上下文管理，全面替代内置的“群聊上下文感知”功能，支持更灵活的上下文控制、图片识别、合并转发分析。", "0.2.0")
 class GroupContextPlugin(Star):
     def __init__(self, context: Context, config: AstrBotConfig):
         super().__init__(context)
@@ -40,6 +40,9 @@ class GroupContextPlugin(Star):
         self.session_chat_maxlen = int(self.get_cfg("session_chat_maxlen", 500))
         self.session_chats = defaultdict(lambda: deque() if self.session_chat_maxlen == -1 else deque(maxlen=self.session_chat_maxlen))
         """记录群成员的群聊消息，每个元素是包含多模态内容的列表"""
+
+        self.group_whitelist = {str(item) for item in self.get_cfg("group_whitelist", [])}
+        self.group_blacklist = {str(item) for item in self.get_cfg("group_blacklist", [])}
 
         self.max_context_rounds = int(self.get_cfg("max_context_rounds", -1))
         self.dequeue_context_rounds = int(self.get_cfg("dequeue_context_rounds", 2))
@@ -61,6 +64,8 @@ class GroupContextPlugin(Star):
         logger.info("群聊上下文感知插件已初始化")
         logger.info(f"对话轮数控制: max={self.max_context_rounds}, dequeue={self.dequeue_context_rounds}")
         logger.info(f"消息缓存上限: {'不限制' if self.session_chat_maxlen == -1 else self.session_chat_maxlen}")
+        logger.info(f"群聊白名单: {'不限制' if not self.group_whitelist else len(self.group_whitelist)}")
+        logger.info(f"群聊黑名单: {'无' if not self.group_blacklist else len(self.group_blacklist)}")
         logger.info(f"合并转发分析: {'已启用' if self.enable_forward_analysis else '已禁用'}")
         logger.info(f"图片识别: {'已启用' if self.enable_image_recognition else '已禁用'}")
         if self.enable_image_recognition:
@@ -78,6 +83,17 @@ class GroupContextPlugin(Star):
             if message.startswith(prefix):
                 return True
         return False
+
+    def _is_group_allowed(self, event: AstrMessageEvent) -> bool:
+        group_id = event.get_group_id()
+        candidates = {event.unified_msg_origin}
+        if group_id:
+            candidates.add(str(group_id))
+
+        if self.group_blacklist and candidates & self.group_blacklist:
+            return False
+
+        return not self.group_whitelist or bool(candidates & self.group_whitelist)
 
     def _extract_image_url(self, image_data: str | dict | Image) -> str | None:
         if not image_data:
@@ -138,6 +154,10 @@ class GroupContextPlugin(Star):
     async def on_message(self, event: AstrMessageEvent):
         """处理群聊消息，记录到上下文缓存"""
         if event.get_message_type() != MessageType.GROUP_MESSAGE:
+            return
+
+        if not self._is_group_allowed(event):
+            logger.debug(f"群聊上下文 | {event.unified_msg_origin} | 不在允许范围内，已跳过")
             return
 
         message_text = ""

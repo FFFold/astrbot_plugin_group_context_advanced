@@ -1,6 +1,6 @@
 name: astrbot_plugin_group_context_advanced
 display_name: 群聊上下文感知增强
 desc: 更优雅的群聊上下文管理，全面替代内置的“群聊上下文感知”功能，支持更灵活的上下文控制、图片识别、合并转发分析。
-version: v0.1.0
+version: v0.2.0
 author: Fold
 repo: https://github.com/FFFold/astrbot_plugin_group_context_advanced

@@ -4,6 +4,10 @@
 
 ### 新增功能
 - 群聊白名单/黑名单配置，支持按群号或 `unified_msg_origin` 限制插件生效范围，黑名单优先级高于白名单
+
+## v0.1.0 - 初始重构版本
+
+### 新增功能
 - `session_chat_maxlen` 配置项，可调整每个群聊的未处理消息缓存上限（默认 500，-1 不限制）
 - `forward_max_messages` 配置项，限制合并转发消息的最大解析条数，防止 token 超限
 
@@ -33,9 +37,9 @@
 - 空 `chat_text` 不再拼接无用的 Marker
 - `_conf_schema.json` 全部字段拆分 `description` 和 `hint`，提升 WebUI 可读性
 
-## v0.1.0
+## v0.0.1
 
-### 初始重构版本
+### 上游插件原始版本
 - 基于 AstrBot 内置群聊上下文进行优化和增强
 - user/agent 对形式的上下文，每次请求仅包含上一轮请求后新增的群聊消息
 - 支持 QQ 合并转发消息分析（仅 aiocqhttp 平台）

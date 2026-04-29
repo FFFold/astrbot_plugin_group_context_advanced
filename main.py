@@ -95,6 +95,18 @@ class GroupContextPlugin(Star):
 
         return not self.group_whitelist or bool(candidates & self.group_whitelist)
 
+    def _get_message_time_str(self, event: AstrMessageEvent) -> str:
+        timestamp = getattr(event.message_obj, "timestamp", None)
+        if timestamp is not None:
+            try:
+                timestamp = float(timestamp)
+                if timestamp > 1_000_000_000_000:
+                    timestamp /= 1000
+                return datetime.datetime.fromtimestamp(timestamp).strftime("%H:%M:%S")
+            except (OSError, OverflowError, TypeError, ValueError):
+                logger.warning(f"消息时间戳格式异常，回退当前时间: {timestamp}")
+        return datetime.datetime.now().strftime("%H:%M:%S")
+
     def _extract_image_url(self, image_data: str | dict | Image) -> str | None:
         if not image_data:
             return None
@@ -195,7 +207,7 @@ class GroupContextPlugin(Star):
         3. enable_image_recognition = True, image_caption = True: 所有图片使用转述描述，保留原始位置
         """
 
-        datetime_str = datetime.datetime.now().strftime("%H:%M:%S")
+        datetime_str = self._get_message_time_str(event)
 
         current_message_content = []
 

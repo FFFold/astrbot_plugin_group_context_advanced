@@ -459,8 +459,6 @@ class GroupContextPlugin(Star):
 
         session_chat = self.session_chats[event.unified_msg_origin]
         session_chat_items = list(session_chat)
-        if not session_chat_items:
-            return
 
         current_message_id = getattr(event.message_obj, "message_id", None)
         current_message_index = None

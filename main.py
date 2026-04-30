@@ -130,6 +130,16 @@ class GroupContextPlugin(Star):
 
         return None
 
+    def _get_chat_item_content(self, chat_item):
+        if isinstance(chat_item, dict) and "content" in chat_item:
+            return chat_item["content"]
+        return chat_item
+
+    def _get_chat_item_message_id(self, chat_item):
+        if isinstance(chat_item, dict):
+            return chat_item.get("message_id")
+        return None
+
     async def _detect_forward_message(self, event) -> str | None:
         logger.debug(f"_detect_forward_message | IS_AIOCQHTTP={IS_AIOCQHTTP}, isinstance(event, AiocqhttpMessageEvent)={isinstance(event, AiocqhttpMessageEvent) if IS_AIOCQHTTP else 'N/A'}")
 
@@ -279,7 +289,10 @@ class GroupContextPlugin(Star):
             current_message_content.append({"type": "text", "text": full_text})
 
         if current_message_content:
-            self.session_chats[event.unified_msg_origin].append(current_message_content)
+            self.session_chats[event.unified_msg_origin].append({
+                "message_id": getattr(event.message_obj, "message_id", None),
+                "content": current_message_content,
+            })
             logger.debug(f"群聊上下文 | {event.unified_msg_origin} | 添加了一条包含 {len(current_message_content)} 个组件的消息")
 
     async def _encode_image_bs64(self, image_url: str) -> str:
@@ -441,16 +454,35 @@ class GroupContextPlugin(Star):
 
         self._control_image_carry_rounds(req, self.image_carry_rounds)
 
-        req.contexts.append({"role": "system", "content": f"{SYSTEM_MARKER}\n{self.system_prompt}"})
-
         combined_content = []
         text_prompt_parts = []
 
         session_chat = self.session_chats[event.unified_msg_origin]
-        consumed_count = len(session_chat)
+        session_chat_items = list(session_chat)
+        if not session_chat_items:
+            return
+
+        current_message_id = getattr(event.message_obj, "message_id", None)
+        current_message_index = None
+        if current_message_id is not None:
+            current_message_id = str(current_message_id)
+            for index, chat_item in enumerate(session_chat_items):
+                item_message_id = self._get_chat_item_message_id(chat_item)
+                if item_message_id is not None and str(item_message_id) == current_message_id:
+                    current_message_index = index
+                    break
+
+        if current_message_index is None:
+            inject_items = session_chat_items
+            consumed_count = len(session_chat_items)
+        else:
+            inject_items = session_chat_items[:current_message_index]
+            consumed_count = current_message_index + 1
+
         event.set_extra(CONSUMED_CHAT_COUNT_EXTRA, consumed_count)
 
-        for message in list(session_chat):
+        for chat_item in inject_items:
+            message = self._get_chat_item_content(chat_item)
             combined_content.extend(message)
 
             text_part = ""
@@ -474,12 +506,12 @@ class GroupContextPlugin(Star):
 
         logger.debug(f"构建的prompt: \n{req.prompt}")
 
-        user_message = {
-            "role": "user",
-            "content": combined_content
-        }
+        if combined_content:
+            user_message = {"role": "user", "content": combined_content}
 
-        req.contexts.append(user_message)
+            req.contexts.append(user_message)
+
+        req.contexts.append({"role": "system", "content": f"{SYSTEM_MARKER}\n{self.system_prompt}"})
 
     @filter.on_llm_request(priority=-10000)
     async def on_req_llm_clear_prompt(self, event: AstrMessageEvent, req: ProviderRequest):

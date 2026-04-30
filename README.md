@@ -124,7 +124,7 @@
 ## 开发者
 
 - 作者: Fold
-- 版本: v0.1.0
+- 版本: v0.2.2
 - 仓库: https://github.com/zz6zz666/astrbot_plugin_group_context
 
 ## 许可证

@@ -24,15 +24,19 @@ except ImportError:
 
 
 """
-群聊上下文感知插件
-提供增强的群聊上下文管理，包括群聊记录追踪、图片描述、合并转发分析、指令过滤等功能
+群聊上下文感知插件（已归档）
+
+注意：AstrBot 框架已在 PR #8226 (https://github.com/AstrBotDevs/AstrBot/pull/8226)
+中原生实现了群聊上下文感知增强功能，本插件的历史使命已经完成，不再维护。
+请升级 AstrBot 框架至包含该 PR 的版本，然后在 WebUI 中开启框架自带的
+「群聊上下文感知」功能即可。
 """
 
 SYSTEM_MARKER = "[GCPLUGIN]"
 GC_CHAT_MARKER = "<!--group_context_plugin_chat-->"
 CONSUMED_CHAT_COUNT_EXTRA = "group_context_consumed_chat_count"
 
-@register("group_context_advanced", "Fold", "更优雅的群聊上下文管理，全面替代内置的“群聊上下文感知”功能，支持更灵活的上下文控制、图片识别、合并转发分析。", "0.2.3")
+@register("group_context_advanced", "Fold", "【已归档】本插件功能已被 AstrBot 框架原生实现 (PR #8226)，不再维护。请升级 AstrBot 框架。", "0.2.3")
 class GroupContextPlugin(Star):
     def __init__(self, context: Context, config: AstrBotConfig):
         super().__init__(context)

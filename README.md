@@ -1,8 +1,11 @@
-# 群聊上下文感知增强插件 (已归档)
-
-> **此插件已归档，不再维护。**
+> **⚠️ 注意：此仓库已归档，不再维护 ⚠️**
 >
-> AstrBot 框架已在 [PR #8226](https://github.com/AstrBotDevs/AstrBot/pull/8226) 中原生实现了群聊上下文感知增强功能，本插件的历史使命已经完成。请升级 AstrBot 框架至包含该 PR 的版本，并在框架自带的 WebUI 中启用「群聊上下文感知」功能即可，无需再使用本插件。
+> AstrBot 框架已在 [PR #8226](https://github.com/AstrBotDevs/AstrBot/pull/8226) 中原生实现了群聊上下文感知增强功能。
+> **请升级 AstrBot 框架至包含该 PR 的版本，然后在 WebUI 中开启框架自带的「群聊上下文感知」功能即可，无需再使用本插件。**
+
+---
+
+# 群聊上下文感知增强插件
 
 > 修改优化自https://github.com/zz6zz666/astrbot_plugin_group_context
 

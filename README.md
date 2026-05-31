@@ -1,8 +1,12 @@
-# 群聊上下文感知增强插件
+# 群聊上下文感知增强插件 (已归档)
+
+> **此插件已归档，不再维护。**
+>
+> AstrBot 框架已在 [PR #8226](https://github.com/AstrBotDevs/AstrBot/pull/8226) 中原生实现了群聊上下文感知增强功能，本插件的历史使命已经完成。请升级 AstrBot 框架至包含该 PR 的版本，并在框架自带的 WebUI 中启用「群聊上下文感知」功能即可，无需再使用本插件。
 
 > 修改优化自https://github.com/zz6zz666/astrbot_plugin_group_context
 
-基于 AstrBot 内置的群聊上下文进行优化和增强，提供以下核心功能：
+本插件在 AstrBot 原生实现群聊上下文感知增强之前，提供了以下核心功能：
  - 📝 **群聊记录追踪**: 自动记录群聊消息，为 AI 提供上下文信息
  - 📷 **合并转发消息分析**: 支持直接发送或回复引用合并转发消息
  - 🖼️ **图片识别**: 支持原生 URL 图片自动嵌入或转述描述两种模式
@@ -41,7 +45,7 @@
 | `enable_command_filter` | bool | `true` | 是否启用指令消息过滤 |
 | `command_prefixes` | list | `["/"]` | 指令消息前缀列表 |
 
-## 与内置插件的区别
+## 与内置插件的区别（历史参考）
 
 本插件主要改进包括：
 
@@ -107,15 +111,14 @@
 
 ## 注意事项
 
-- 请确保禁用 AstrBot 内置的群聊上下文感知功能，避免冲突
-- 图片描述功能需要配置支持多模态的 Provider
-- `max_context_rounds` 设为 `-1`（默认）时不做限制，完全依赖框架自身的截断策略
+- **此插件已归档**，请升级 AstrBot 框架至包含 [PR #8226](https://github.com/AstrBotDevs/AstrBot/pull/8226) 的版本，然后在 WebUI 中开启框架自带的「群聊上下文感知」功能即可。
+- 本插件不再接收任何 Issue 或 PR。
 
 ## 开发者
 
 - 作者: Fold
-- 版本: v0.2.2
-- 仓库: https://github.com/FFFold/astrbot_plugin_group_context
+- 最后版本: v0.2.3
+- 仓库: https://github.com/FFFold/astrbot_plugin_group_context_advanced
 
 ## 许可证
 
